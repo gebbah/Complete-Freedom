@@ -8,45 +8,43 @@
     <meta charset="utf-8">
 </head>
 <body>
-    <!-- Обёртка для контента поверх фона -->
     <div class="content-wrapper">
-        <div class="game">
-            <div id="mainChar"></div>
-            <div id="block"></div>
+        <div class="game-container">
+            <div class="game">
+                <div id="mainChar"></div>
+                <div id="block"></div>
+            </div>
+            
+            <p class="score">Score: <span id="scoreSpan">0</span></p>
         </div>
-        
-        <p>Score: <span id="scoreSpan"></span></p>
 
         <audio id="player">
-            <source src="music/Start Menu Dreams.mp3" type="audio/mp3">
+            <source src="music/Start Menu Dreams.wav" type="audio/wav">
         </audio>
 
-        <!-- Блок инструкций -->
         <div id="tutorial-container">
             <div id="tutorial-box">
-                <p>Нажимайте на экран, чтоб увернуться! <br> Или используйте ПРОБЕЛ, СТРЕЛКУ ВВЕРХ или КЛАВИШУ W <br> <a href="https://band.link/completefreedom" target="_blank">Кликай сюда, чтобы прослушать альбом на всех площадках! <br> Побольше Frutiger Aero и  Webcore в ваши дома</a></p>
+                <p>Нажимайте на экран, чтоб увернуться!<br> 
+                <a href="https://band.link/completefreedom" target="_blank">
+                    Кликай сюда, чтобы прослушать альбом!<br>
+                    Frutiger Aero & Webcore
+                </a></p>
             </div>
         </div>
     </div>
     
-    <!-- Модальное окно Game Over -->
     <div id="gameOverModal" class="modal">
         <div class="modal-content">
             <h2>Game Over</h2>
-            <p>Your score: <span id="finalScore"></span></p>
+            <p>Your score: <span id="finalScore">0</span></p>
             <p>
                 <a href="https://band.link/completefreedom" target="_blank">
-                    Кликай сюда, чтобы прослушать альбом на всех площадках!<br>
-                    Побольше Frutiger Aero и Webcore в ваши дома
+                    Кликай сюда, чтобы прослушать альбом!<br>
+                    Frutiger Aero & Webcore
                 </a>
             </p>
             <button id="restartButton">Restart</button>
         </div>
-    </div>
-    
-    <!-- Сообщение о повороте устройства -->
-    <div id="rotate-message">
-        Пожалуйста, поверните устройство в горизонтальную ориентацию!
     </div>
     
     <script type="text/javascript" src="JS/myJs.js"></script>
