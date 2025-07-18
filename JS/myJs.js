@@ -5,7 +5,6 @@ audio.volume = 0.7;
 // Элемент для сообщения
 const audioMessage = document.createElement('div');
 audioMessage.id = 'audioMessage';
-audioMessage.textContent = "Коснитесь экрана, чтобы запустить музыку";
 document.body.appendChild(audioMessage);
 
 // Флаг для отслеживания первого запуска аудио
@@ -16,9 +15,12 @@ function tryStartAudio() {
     if (audioStarted) return;
     
     audio.play().then(() => {
+        console.log("Аудио запущено");
         audioStarted = true;
         audioMessage.style.display = 'none';
     }).catch(e => {
+        console.log("Ошибка запуска аудио:", e);
+        audioMessage.textContent = "Коснитесь экрана, чтобы запустить музыку";
         audioMessage.style.display = 'block';
     });
 }
@@ -27,12 +29,53 @@ function tryStartAudio() {
 window.addEventListener('load', () => {
     audio.volume = 0.6;
     setTimeout(tryStartAudio, 500);
+    
+    // Проверка ориентации при загрузке
+    checkOrientation();
 });
 
-// Запуск при любом взаимодействии
-document.addEventListener('click', tryStartAudio);
-document.addEventListener('touchstart', tryStartAudio);
-document.addEventListener('keydown', tryStartAudio);
+// Проверка ориентации устройства
+function checkOrientation() {
+    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+    
+    if (isPortrait && window.innerWidth <= 768) {
+        document.getElementById('rotate-message').style.display = 'flex';
+    } else {
+        document.getElementById('rotate-message').style.display = 'none';
+    }
+}
+
+// Слушатель изменения ориентации
+window.addEventListener("resize", checkOrientation);
+window.addEventListener("orientationchange", checkOrientation);
+
+// Запуск при любом взаимодействии с игрой
+function setupAudioInteractions() {
+    // Клик/касание по игровой области
+    document.querySelector('.game').addEventListener('click', tryStartAudio);
+    document.querySelector('.game').addEventListener('touchstart', tryStartAudio);
+    
+    // Нажатие любой клавиши
+    document.addEventListener('keydown', (e) => {
+        tryStartAudio();
+        
+        // Пробуем запустить прыжок, если это управляющая клавиша
+        if (canJump) {
+            const isJumpKey = 
+                jumpControls.keys.includes(e.code) || 
+                jumpControls.keys.includes(e.key) ||
+                jumpControls.keyCodes.includes(e.keyCode);
+            
+            if (isJumpKey) {
+                e.preventDefault();
+                jump();
+            }
+        }
+    });
+}
+
+// Инициализируем аудио-взаимодействия
+setupAudioInteractions();
 
 // Повтор музыки
 audio.addEventListener('ended', () => {
@@ -50,16 +93,19 @@ const gameOverModal = document.getElementById("gameOverModal");
 const finalScoreElement = document.getElementById("finalScore");
 const restartButton = document.getElementById("restartButton");
 
+// Сохраняем исходное положение блока
+const originalBlockPosition = "95vw";
+
 // Конфигурация управления прыжком
 const jumpControls = {
-    keys: ['Space', ' ', 'ArrowUp', 'KeyW'],
-    keyCodes: [32, 38, 87],
-    mouse: true
+    keys: ['Space', ' ', 'ArrowUp', 'KeyW'], // Современные коды клавиш
+    keyCodes: [32, 38, 87],                 // Устаревшие keyCodes
+    mouse: true                             // Разрешить клик мышью
 };
 
 // Состояние прыжка
 let canJump = true;
-const JUMP_COOLDOWN = 400;
+const JUMP_COOLDOWN = 490; // Время анимации прыжка
 
 // ======== СЛУЧАЙНЫЕ ИЗОБРАЖЕНИЯ ДЛЯ БЛОКОВ ========
 const blockImages = [
@@ -67,10 +113,6 @@ const blockImages = [
     'pictures/2.png',
     'pictures/3.png',
     'pictures/4.png',
-    'pictures/5.png',
-    'pictures/6.png',
-    'pictures/7.png',
-    'pictures/8.png'
 ];
 
 // Функция для получения случайного изображения
@@ -100,21 +142,17 @@ function jump() {
 
 // Обработчики управления
 function setupControls() {
-    // Клик/касание по игровой области
-    document.querySelector('.game').addEventListener('click', jump);
-    document.querySelector('.game').addEventListener('touchstart', jump);
+    // Клик по игровой области
+    if (jumpControls.mouse) {
+        document.querySelector('.game').addEventListener('click', () => {
+            if (canJump) jump();
+        });
+    }
     
-    // Обработка клавиатуры
-    document.addEventListener('keydown', (e) => {
-        const isJumpKey = 
-            jumpControls.keys.includes(e.code) || 
-            jumpControls.keys.includes(e.key) ||
-            jumpControls.keyCodes.includes(e.keyCode);
-        
-        if (isJumpKey) {
-            e.preventDefault();
-            jump();
-        }
+    // Обработка касаний для мобильных
+    document.querySelector('.game').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (canJump) jump();
     });
 }
 
@@ -125,7 +163,7 @@ setupControls();
 function restartGame() {
     // Сбрасываем положение блока
     block.style.animation = "none";
-    block.style.right = "-15%";
+    block.style.left = originalBlockPosition;
     
     // Сбрасываем счёт
     counter = 0;
@@ -136,7 +174,7 @@ function restartGame() {
     
     // Перезапускаем анимацию
     setTimeout(() => {
-        block.style.animation = "block 2s infinite linear";
+        block.style.animation = "block 1.3s infinite linear";
     }, 10);
     
     // Скрываем модальное окно
@@ -146,7 +184,7 @@ function restartGame() {
 // Обработчик кнопки рестарта
 restartButton.addEventListener('click', restartGame);
 
-// Проверка столкновений
+// Проверка столкновений через коллайдеры
 var checkDead = setInterval(function() {
     const charRect = mainChar.getBoundingClientRect();
     const blockRect = block.getBoundingClientRect();
@@ -163,8 +201,9 @@ var checkDead = setInterval(function() {
         // Сохраняем текущий счёт
         const finalScore = Math.floor(counter/100);
         
-        // Сбрасываем анимацию
+        // Полностью сбрасываем анимацию и позицию
         block.style.animation = "none";
+        block.style.left = originalBlockPosition;
         
         // Устанавливаем новое случайное изображение
         setRandomBlockImage();
@@ -186,5 +225,5 @@ setRandomBlockImage();
 
 // Адаптация скорости для мобильных
 if (window.innerWidth <= 768) {
-    block.style.animation = "block 3s infinite linear";
+    block.style.animation = "block 2s infinite linear";
 }
